@@ -10,10 +10,18 @@ html, body, #container {
     display: flex;
 }
 
+
+
 #side-bar {
     width: 450px;
     height: 100%;
 }
+
+li {
+    list-style-type: none;
+}
+
+
 
 #main {
     flex-grow: 1;
