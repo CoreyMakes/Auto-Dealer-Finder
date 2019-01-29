@@ -1,5 +1,5 @@
 // Initial Dealers Seed Data
-var dealers = [
+var dealersData = [
     {
         brand: "Lamborghini",
         name: "ランボルギーニ横浜",
@@ -138,113 +138,122 @@ var map;
 var markers = [];
 var dealerInfoWindow;
 var bounds;
+
 // The Google Map API Callback Function
 function initMap() {
+    var jgc = {
+        lat: 35.455791,
+        lng: 139.633119
+    };
+
     map = new google.maps.Map(document.getElementById("map"), {
-        center: {lat: 35.4561941, lng: 139.6309885},
+        center: jgc,
         zoom: 19,
     });
 
-    setMarkers(dealers);
+    // Initiate global variables: dealerInfoWindow and bounds for later calls from the dealer's data model.
+    dealerInfoWindow = new google.maps.InfoWindow();
+    bounds = new google.maps.LatLngBounds();
 
+    // Activate KnockOut.js and bind ViewModel to the View(index.html).
     ko.applyBindings(new ViewModel());
 }
 
-// // The Dealer Model!!!
-// // Need to construct this data model, like a Python class, which has attributes and methods inside.
-// var dealerModel = function(data) {
-//     var self = this;
+// The Dealer Model!!!
+// Need to construct this Dealer Data Model as a Javascript Object, like a Python class, which has attributes and methods inside.
+var dealerModel = function(data) {
+    var self = this;
 
-//     this.brand = data.brand;
-//     this.name = data.name;
-//     this.location = data.location;
-//     this.address = data.address;
-//     this.site = data.site;
-// };
+    // brand will be used for listing dealers on the left panel via ko's text binding,
+    // therefore, brand is ok to be saved into a ko observable here.
+    this.brand = ko.observable(data.brand);
 
-// Function for creating markers and setting up their basic properties.
-function setMarkers(dealers) {
-    dealerInfoWindow = new google.maps.InfoWindow();
-    bounds = new google.maps.LatLngBounds();
+    // However, other attributes except from brand can not be saved into a ko observable, otherwise they become objects.
+    // Because name and location will be used for creating markers,
+    // name, address, and site will be used for dealerInfo (infoWindow contents),
+    // therefore, object cannot be passed in, we need a real value instead of an object memory in these cases.
+    this.name = data.name;
+    this.location = data.location;
+    this.address = data.address;
+    this.site = data.site;
+
+    // Set the marker for each dealer.
+    this.marker = new google.maps.Marker({
+        map: map,
+        position: self.location,
+        title: self.name,
+        animation: google.maps.Animation.DROP
+    });
+    // Push the marker to the array of markers.
+    markers.push(self.marker);
+
+    self.marker.addListener('click', function() {
+        // click action #1
+        toggleBounce(this);
+        
+        // click action #2
+        var dealerInfo = {
+            name: self.name,
+            address: self.address,
+            site: self.site
+        };
+        setInfoWindow(this, dealerInfoWindow, dealerInfo);
+        
+        // click action #3
+        map.panTo(this.getPosition());
+        // Or we can use: map.panTo(self.location);
+    });
+
+    // Extend the boundaries of the map for each marker.
+    bounds.extend(self.marker.position);
     map.fitBounds(bounds);
 
-    for (index = 0; index < dealers.length; index++) {
-        var dealer = dealers[index];
-        var position = dealer.location;
-        var title = dealer.name;
-        var marker = new google.maps.Marker({
-            map: map,
-            position: position,
-            title: title,
-            id: index,
-            animation: google.maps.Animation.DROP
-        });
-        // Push the marker to the array of markers.
-        markers.push(marker);
-
-        // Extend the boundaries of the map for each marker.
-        bounds.extend(position);
-
-        // // This marker animation handling IIFE can be integrated into the upgradeMarker function below.
-        // marker.addListener('click', (function(markerCaptured) {
-        //     return function() {
-        //         if (markerCaptured.getAnimation() !== null) {
-        //             markerCaptured.setAnimation(null);
-        //         } else {
-        //             markerCaptured.setAnimation(google.maps.Animation.BOUNCE);
-        //             setTimeout(function() {
-        //                 markerCaptured.setAnimation(null);
-        //             }, 2000);
-        //         }
-        //     };
-        // })(marker));
-
-        marker.addListener('click', function(dealerCaptured) {
-            return function() { // This is important, need this "return function() {};"!!! 
-                upgradeMarker(this, dealerCaptured, dealerInfoWindow);
-                // console.log(dealerCaptured.name); // For debugging
-            };
-        }(dealer));
-
-        dealer.marker = marker;
+    // Clicking the dealers(brands) in the list should have the same effect with clicking the markers directly on the map.
+    this.selectDealer = function() {
+        // By calling this selectDealer method of the dealer model,
+        // trigger all pre-defined click events (click action #1 ~ #3) for this specific dealer's marker.
+        google.maps.event.trigger(self.marker, 'click');
     }
-}
+};
 
-// Function for handling marker animation and opening infowindow.
-function upgradeMarker(marker, dealer, infoWindow) {
+// Function for handling marker's bouncing animation.
+function toggleBounce(marker) {
     if (marker.getAnimation() !== null) {
         marker.setAnimation(null);
     } else {
         marker.setAnimation(google.maps.Animation.BOUNCE);
         setTimeout(function() {
             marker.setAnimation(null);
-        }, 2000);
+        }, 1500);
     }
+}
 
+// Function for opening infowindow of a marker.
+function setInfoWindow(marker, infoWindow, dealerInfo) {
     if (infoWindow.marker !== marker) {
         infoWindow.setContent('');
         infoWindow.marker = marker;
-        infoWindow.setContent(populateInfoWindow(dealer));
+        infoWindow.setContent(populateInfoWindow(dealerInfo));
         infoWindow.open(map, marker);
 
         // Make sure the marker property is cleared if the infowindow is closed.
         infoWindow.addListener('closeclick', function() {
             infoWindow.marker = null;
-        })
+        });
+
     // // Either need the closeclick listener or the else statement code below.
     // } else {
-    //     infoWindow.setContent('');
     //     infoWindow.setContent(populateInfoWindow(dealer));
     //     infoWindow.open(map, marker);
     }
 }
 
 // Function for generating contents of infowindow.
-function populateInfoWindow(dealer) {
+function populateInfoWindow(dealerInfo) {
     return ("<div class = 'info-content'>" +
-        "<h3>" + dealer.name + "</h3>" +
-        "<h4>" + dealer.address + "</h4>" +
-        "<p>" + dealer.site + "<p>" +
+        "<h3>" + dealerInfo.name + "</h3>" +
+        "<h4>" + dealerInfo.address + "</h4>" +
+        "<p>" + dealerInfo.site + "<p>" +
         "</div>");
 }
 
@@ -253,15 +262,8 @@ function populateInfoWindow(dealer) {
 var ViewModel = function() {
     self = this;
 
-    self.dealers = ko.observableArray(dealers);
-
-    self.selectDealer = function(dealer) {
-        dealerInfoWindow.setContent(populateInfoWindow(dealer));
-        var selectedMarker = dealer.marker;
-        dealerInfoWindow.open(map, selectedMarker);
-        selectedMarker.setAnimation(google.maps.Animation.BOUNCE);
-        setTimeout(function() {
-            selectedMarker.setAnimation(null);
-        }, 3000);
-    };
+    self.dealers = ko.observableArray([]);
+    dealersData.forEach(function(dealerData) {
+        self.dealers.push(new dealerModel(dealerData));
+    });
 };
