@@ -133,6 +133,7 @@ var dealersData = [
 ];
 
 
+
 // Define global variables, which can be accessed inside any functions and models.
 var map;
 var markers = [];
@@ -159,10 +160,11 @@ function initMap() {
     ko.applyBindings(new ViewModel());
 }
 
+
 // The Dealer Model!!!
 // Need to construct this Dealer Data Model as a Javascript Object, like a Python class, which has attributes and methods inside.
 var dealerModel = function(data) {
-    var self = this;
+    var self = this; // The rule here is: use this for first-time assignment, self is used for calling purpose.
 
     // brand will be used for listing dealers on the left panel via ko's text binding,
     // therefore, brand is ok to be saved into a ko observable here.
@@ -177,15 +179,13 @@ var dealerModel = function(data) {
     this.address = data.address;
     this.site = data.site;
 
-    // An attribute for filtering the markers on the map when users search for specific brand later.
-    this.visible = ko.observable(true);
-
     // Set the marker for each dealer.
     this.marker = new google.maps.Marker({
         position: self.location,
         title: self.name,
         animation: google.maps.Animation.DROP
     });
+
     // Push the marker to the array of markers.
     markers.push(self.marker);
 
@@ -197,7 +197,10 @@ var dealerModel = function(data) {
         var dealerInfo = {
             name: self.name,
             address: self.address,
-            site: self.site
+            site: self.site,
+            venueID: self.venueID,
+            phone: self.phone, // Refer to codes in AJAX section below.
+            hours: self.hours, // Refer to codes in AJAX section below.
         };
         setInfoWindow(this, dealerInfoWindow, dealerInfo);
         
@@ -213,6 +216,10 @@ var dealerModel = function(data) {
         google.maps.event.trigger(self.marker, 'click');
     }
 
+
+    // An attribute for filtering the markers on the map when users search for specific brand.
+    this.visible = ko.observable(true);
+
     // Function for filtering markers' visibility according to user's search.
     this.filteredMarkers = ko.computed(function() {
         if (self.visible() === true) {
@@ -224,7 +231,61 @@ var dealerModel = function(data) {
             self.marker.setMap(null);
         }
     });
+
+
+    // Use JQuery to make AJAX calls to fetch information via Foursquare's API.
+    this.venueID = ""; // For saving the venueID of each dealer via the 1st layer AJAX call.
+    this.phone = "";
+    this.hours = "";
+
+    var CLIENT_ID = "EHB4Q2KH44NQVLZMYBEDO4MYCJJGZSDEA5LJBOBG1IDP1I2A";
+    var CLIENT_SECRET = "5KXAOKX1YOHTMDGT0M1BQZ3RUG1VXZ4RYM34VFZOQLRZXJZI";
+
+    getVenueIDUrl = "https://api.foursquare.com/v2/venues/search?ll=" + self.location.lat + "," + self.location.lng +
+        "&client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&v=20190212" + "&query=" + self.name;
+
+    // Need to implement a nested AJAX calls, because venue's contact info and opening hours do not show up just by the 1st layer call.
+    $.ajax({
+        url: getVenueIDUrl,
+        success: function (result) {
+            self.venueID = result.response.venues[0].id;
+            // Confirm the first layer's AJAX call was success and leave some time for the venueID to be updated before calling the 2nd layer.
+            if (result.meta.code === 200) {
+                // Important! The assigning of this url has to be put in here rather than outside (after getVenueIDUrl, which is wrong),
+                // because the self.venueID will not be updated during assignation, if this url defining is placed outside.
+                // Also, we need a question mark before client_id in this url.
+                getVenueDetailsUrl = "https://api.foursquare.com/v2/venues/" + self.venueID +
+                    "?client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&v=20190212";
+
+                $.ajax({
+                    url: getVenueDetailsUrl,
+                    success: function (data) {
+                        // Get the dealer's phone number.
+                        self.phone = data.response.venue.contact.formattedPhone ? data.response.venue.contact.formattedPhone : "N/A";
+
+                        // Get the dealer's opening time.
+                        if (data.response.venue.hours) {
+                            var timeframes = data.response.venue.hours.timeframes[0];
+                            // Tip: &nbsp represents blank space in HTML.
+                            self.hours = timeframes.days + "<span>&nbsp &nbsp</span>" + timeframes.open[0].renderedTime;
+                        } else {
+                            self.hours = "Opening Time Unknown";
+                        }
+                    },
+                    error: function (error) {
+                        alert("Error: Foursqure API call failed(2nd layer)!");
+                        console.log(error);
+                    }
+                });
+            }
+        },
+        error: function (error) {
+            alert("Error: Foursqure API call failed(1st layer)!");
+            console.log(error);
+        }
+    });
 };
+
 
 // Function for handling marker's bouncing animation.
 function toggleBounce(marker) {
@@ -264,8 +325,12 @@ function populateInfoWindow(dealerInfo) {
         "<h3>" + dealerInfo.name + "</h3>" +
         "<h4>" + dealerInfo.address + "</h4>" +
         "<p>" + dealerInfo.site + "<p>" +
+        "<p>" + dealerInfo.venueID + "<p>" +
+        "<p>" + dealerInfo.phone + "<p>" +
+        "<p>" + dealerInfo.hours + "<p>" +
         "</div>");
 }
+
 
 
 // The View Model
