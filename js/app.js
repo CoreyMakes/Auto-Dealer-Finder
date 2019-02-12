@@ -177,9 +177,11 @@ var dealerModel = function(data) {
     this.address = data.address;
     this.site = data.site;
 
+    // An attribute for filtering the markers on the map when users search for specific brand later.
+    this.visible = ko.observable(true);
+
     // Set the marker for each dealer.
     this.marker = new google.maps.Marker({
-        map: map,
         position: self.location,
         title: self.name,
         animation: google.maps.Animation.DROP
@@ -204,16 +206,24 @@ var dealerModel = function(data) {
         // Or we can use: map.panTo(self.location);
     });
 
-    // Extend the boundaries of the map for each marker.
-    bounds.extend(self.marker.position);
-    map.fitBounds(bounds);
-
     // Clicking the dealers(brands) in the list should have the same effect with clicking the markers directly on the map.
     this.selectDealer = function() {
         // By calling this selectDealer method of the dealer model,
         // trigger all pre-defined click events (click action #1 ~ #3) for this specific dealer's marker.
         google.maps.event.trigger(self.marker, 'click');
     }
+
+    // Function for filtering markers' visibility according to user's search.
+    this.filteredMarkers = ko.computed(function() {
+        if (self.visible() === true) {
+            self.marker.setMap(map);
+            // Extend the boundaries of the map for each marker.
+            bounds.extend(self.marker.position);
+            map.fitBounds(bounds);
+        } else {
+            self.marker.setMap(null);
+        }
+    });
 };
 
 // Function for handling marker's bouncing animation.
@@ -262,8 +272,31 @@ function populateInfoWindow(dealerInfo) {
 var ViewModel = function() {
     self = this;
 
-    self.dealers = ko.observableArray([]);
+    this.dealers = ko.observableArray([]);
     dealersData.forEach(function(dealerData) {
         self.dealers.push(new dealerModel(dealerData));
     });
+
+    // Function for filtering the brand.
+    this.searchBrand = ko.observable(""); // No need to prepopulate the content, otherwise, no brands will be shown when page is loaded.
+    this.filteredDealers = ko.computed(function() {
+        var wantedBrand = self.searchBrand().toLowerCase();
+        if (!wantedBrand) {
+            self.dealers().forEach(function(dealerItem) {
+                dealerItem.visible(true);
+            });
+            return self.dealers();
+        } else {
+            return ko.utils.arrayFilter(self.dealers(), function(dealerItem) {
+                var keywords = dealerItem.brand().toLowerCase(); // brand is a ko object, so we need a bracket after it.
+                var result = (keywords.search(wantedBrand) >= 0);
+                // result is a boolean, below is an alternative way.
+                // var result = keywords.includes(wantedBrand);
+                dealerItem.visible(result);
+
+                // Filter the items which contain wantedBrand in the dealers() ko observable array.
+                return result; // Only return true (to execute the arrayFilter method) when wantedBrand contains characters in keywords.
+            });
+        }
+    }, this);
 };
