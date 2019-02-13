@@ -139,6 +139,10 @@ var map;
 var markers = [];
 var dealerInfoWindow;
 var bounds;
+var myVM; // Really Important! Need to make this myVM global, in order to let it be able to be called later in the Wiki API section.
+// Save the ViewModel into a global variable first, then in the Wiki section, we can access wikiLinks by calling myVM.wikiLinks.
+// We cannot directly call ViewModel.wikiLinks, because ViewModel is a function,
+// so we need to save it into a (global) variable, then we can access its inner attributes.
 
 // The Google Map API Callback Function
 function initMap() {
@@ -157,8 +161,10 @@ function initMap() {
     bounds = new google.maps.LatLngBounds();
 
     // Activate KnockOut.js and bind ViewModel to the View(index.html).
-    ko.applyBindings(new ViewModel());
+    myVM = new ViewModel();
+    ko.applyBindings(myVM);
 }
+
 
 
 // The Dealer Model!!!
@@ -167,8 +173,10 @@ var dealerModel = function(data) {
     var self = this; // The rule here is: use this for first-time assignment, self is used for calling purpose.
 
     // brand will be used for listing dealers on the left panel via ko's text binding,
-    // therefore, brand is ok to be saved into a ko observable here.
-    this.brand = ko.observable(data.brand);
+    // therefore, brand is ok to be saved into a ko observable.
+    // However, when making Wikipedia API calls we need the text of the car brand,
+    // thus, it should not be save into a ko observable.
+    this.brand = data.brand;
 
     // However, other attributes except from brand can not be saved into a ko observable, otherwise they become objects.
     // Because name and location will be used for creating markers,
@@ -207,12 +215,15 @@ var dealerModel = function(data) {
         // click action #3
         map.panTo(this.getPosition());
         // Or we can use: map.panTo(self.location);
+
+        // click action #4
+        self.loadWikiData(self.brand);
     });
 
     // Clicking the dealers(brands) in the list should have the same effect with clicking the markers directly on the map.
     this.selectDealer = function() {
         // By calling this selectDealer method of the dealer model,
-        // trigger all pre-defined click events (click action #1 ~ #3) for this specific dealer's marker.
+        // trigger all pre-defined click events (click action #1 ~ #4) for this specific dealer's marker.
         google.maps.event.trigger(self.marker, 'click');
     }
 
@@ -233,33 +244,33 @@ var dealerModel = function(data) {
     });
 
 
-    // Use JQuery to make AJAX calls to fetch information via Foursquare's API.
+    // Use JQuery to make AJAX calls to fetch information via Foursquare API.
     this.venueID = ""; // For saving the venueID of each dealer via the 1st layer AJAX call.
     this.phone = "";
     this.hours = "";
 
-    var CLIENT_ID = "EHB4Q2KH44NQVLZMYBEDO4MYCJJGZSDEA5LJBOBG1IDP1I2A";
-    var CLIENT_SECRET = "5KXAOKX1YOHTMDGT0M1BQZ3RUG1VXZ4RYM34VFZOQLRZXJZI";
+    var CLIENT_ID = "OZPSHTUEOD0EZQDXWOCSFZM2MQ1Y32OHEBHKK4CYYZDKQU4G";
+    var CLIENT_SECRET = "3O4GOCSEK15DWKUBZO42IZYOGDX5GKZQEIZOGO5SPP55DK45";
 
-    getVenueIDUrl = "https://api.foursquare.com/v2/venues/search?ll=" + self.location.lat + "," + self.location.lng +
+    var getVenueIDUrl = "https://api.foursquare.com/v2/venues/search?ll=" + self.location.lat + "," + self.location.lng +
         "&client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&v=20190212" + "&query=" + self.name;
 
     // Need to implement a nested AJAX calls, because venue's contact info and opening hours do not show up just by the 1st layer call.
     $.ajax({
         url: getVenueIDUrl,
-        success: function (result) {
+        success: function(result) {
             self.venueID = result.response.venues[0].id;
             // Confirm the first layer's AJAX call was success and leave some time for the venueID to be updated before calling the 2nd layer.
             if (result.meta.code === 200) {
                 // Important! The assigning of this url has to be put in here rather than outside (after getVenueIDUrl, which is wrong),
                 // because the self.venueID will not be updated during assignation, if this url defining is placed outside.
                 // Also, we need a question mark before client_id in this url.
-                getVenueDetailsUrl = "https://api.foursquare.com/v2/venues/" + self.venueID +
+                var getVenueDetailsUrl = "https://api.foursquare.com/v2/venues/" + self.venueID +
                     "?client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&v=20190212";
 
                 $.ajax({
                     url: getVenueDetailsUrl,
-                    success: function (data) {
+                    success: function(data) {
                         // Get the dealer's phone number.
                         self.phone = data.response.venue.contact.formattedPhone ? data.response.venue.contact.formattedPhone : "N/A";
 
@@ -272,18 +283,53 @@ var dealerModel = function(data) {
                             self.hours = "Opening Time Unknown";
                         }
                     },
-                    error: function (error) {
+                    error: function(error) {
                         alert("Error: Foursqure API call failed(2nd layer)!");
                         console.log(error);
                     }
                 });
             }
         },
-        error: function (error) {
+        error: function(error) {
             alert("Error: Foursqure API call failed(1st layer)!");
             console.log(error);
         }
     });
+
+    // Use Wikipedia API (OpenSearch) to get some user selected car maker related wikipedia links.
+    // This loadWikiData function is not a ko.computed function,
+    // therefore, in order to run it, we need to call it (when user makes click action at a brand or marker).
+    this.loadWikiData = function(carBrand) {
+        // Clear out old data before new request.
+        myVM.wikiLinks([]);
+
+        var wikiUrl = "http://en.wikipedia.org/w/api.php?action=opensearch&search=" + carBrand + "&limit=10&format=json&callback=wikiCallback";
+
+        var wikiRequestTimeout = setTimeout(function() {
+            myVM.wikiLinks.push("<h4>Failed to get Wikipedia resources...</h4>");
+        }, 8000);
+
+        $.ajax(wikiUrl, {
+            dataType: "jsonp",
+            success: function(response) {
+                keyWordList = response[1];
+                for (index = 0; index < keyWordList.length; index++) {
+                    searchKeyWord = keyWordList[index];
+                    var searchUrl = "https://en.wikipedia.org/wiki/" + searchKeyWord;
+                    myVM.wikiLinks.push("<a href='"+ searchUrl + "'>" + searchKeyWord + "</a>");
+                }
+                clearTimeout(wikiRequestTimeout);
+            },
+            error: function(error) {
+                alert("Error: Wikipedia API call failed!");
+                console.log(error);
+            }
+        });
+
+        // This "return false is not for the async request, it is for the loadData function and if we don’t set it to false,
+        // it will re-call the function (and reload the page) unlimited times, this way it will break after one completed time.
+        return false;
+    };
 };
 
 
@@ -353,10 +399,11 @@ var ViewModel = function() {
             return self.dealers();
         } else {
             return ko.utils.arrayFilter(self.dealers(), function(dealerItem) {
-                var keywords = dealerItem.brand().toLowerCase(); // brand is a ko object, so we need a bracket after it.
+                var keywords = dealerItem.brand.toLowerCase(); // brand is not a ko object, so we do not need a bracket after it.
                 var result = (keywords.search(wantedBrand) >= 0);
                 // result is a boolean, below is an alternative way.
                 // var result = keywords.includes(wantedBrand);
+
                 dealerItem.visible(result);
 
                 // Filter the items which contain wantedBrand in the dealers() ko observable array.
@@ -364,4 +411,7 @@ var ViewModel = function() {
             });
         }
     }, this);
+
+    // For accessing Wikipedia articles, save all the relevant links into a ko observableArray.
+    this.wikiLinks = ko.observableArray([]);
 };

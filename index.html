@@ -10,10 +10,19 @@
     <div id="container">
         <nav id="side-bar">
             <h2>Auto Dealers in MinatoMirai</h2>
-            <input placeholder="Filter brand" data-bind="textInput: searchBrand, valueUpdate: 'afterkeydown'" />
-            <ul data-bind="foreach: filteredDealers">
-                <li data-bind="text: brand, click: selectDealer"></li>
-            </ul>
+            <div>
+                <input placeholder="Filter brand" data-bind="textInput: searchBrand, valueUpdate: 'afterkeydown'" />
+                <ul data-bind="foreach: filteredDealers">
+                    <li data-bind="text: brand, click: selectDealer"></li>
+                </ul>
+            </div>
+            <div>
+                <h3>Wikipedia Article Links</h3>
+                <ul data-bind="foreach: wikiLinks">
+                    <li data-bind="html: $data"></li>
+                    <!-- $data in KO.js means the content of the ViewModel itself (here just represents each wikiLink itself) -->
+                </ul>
+            </div>
         </nav>
         
         <div id="main">
