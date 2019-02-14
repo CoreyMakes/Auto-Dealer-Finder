@@ -31,7 +31,7 @@ var dealersData = [
         site: "rolls-roycemotorcars-nicole.com"
     },
     {
-        brand: "Bently",
+        brand: "Bentley",
         name: "ベントレー横浜",
         location: {
             lat: 35.4582,
@@ -350,22 +350,60 @@ function setInfoWindow(marker, infoWindow, dealerInfo) {
     if (infoWindow.marker !== marker) {
         infoWindow.setContent('');
         infoWindow.marker = marker;
-        infoWindow.setContent(populateInfoWindow(dealerInfo));
-        infoWindow.open(map, marker);
 
         // Make sure the marker property is cleared if the infowindow is closed.
         infoWindow.addListener('closeclick', function() {
             infoWindow.marker = null;
         });
-
     // // Either need the closeclick listener or the else statement code below.
     // } else {
-    //     infoWindow.setContent(populateInfoWindow(dealer));
+    //     infoWindow.setContent(populateInfoWindow(dealerInfo));
     //     infoWindow.open(map, marker);
+
+
+        // Initiate the Google Street View Image insertion.
+        var streetViewService = new google.maps.StreetViewService();
+        // Use streetview service to get the closest streetview image within 50 meters of the markers position.
+        var radius = 50;
+        // Activate Street View Service and check whether ther is valid images around, if so, then procced to getStreetView().
+        streetViewService.getPanoramaByLocation(marker.position, radius, getStreetView);
+
+        // Fuction for getting street view images and processing the rest operation(like the callback/continued function of getPanoramaByLocation).
+        // In case the status is OK, which means the pano was found, compute the position of the streetview image,
+        // then calculate the heading, then get a panorama from that and set the options.
+        function getStreetView(data, status) {
+            // Check status.
+            if (status == google.maps.StreetViewStatus.OK) {
+                // Get closest available location near the marker.
+                var nearStreetViewLocation = data.location.latLng; // latLng, pay attention to the capital L spelling.
+                // Compute heading.
+                var heading = google.maps.geometry.spherical.computeHeading(nearStreetViewLocation, marker.position);
+                // Setup the infoWindow with other stuffs and an empty tag for the Street View Image.
+                infoWindow.setContent(populateInfoWindow(dealerInfo) + "<div id='pano'></div>");
+                // Write the panorama options we desire with position and point of view.
+                var panoramaOptions = {
+                    position: nearStreetViewLocation,
+                    pov: {
+                      heading: heading,
+                      pitch: 30
+                    }
+                  };
+                // Get the correct panorama photos and populate it into the infoWindow.
+                var panorama = new google.maps.StreetViewPanorama(
+                    document.getElementById('pano'), panoramaOptions);
+            } else {
+                // If status not OK, or there is no valid photos around the marker.
+                // Then we just populate other contents except from the Street View Image.
+                infoWindow.setContent(populateInfoWindow(dealerInfo) + "<div>No Street View Found...</div>");
+            }
+        };
+
+        // Finally, open the infoWindow on the correct marker.
+        infoWindow.open(map, marker);
     }
 }
 
-// Function for generating contents of infowindow.
+// Function for generating contents of infowindow except from the Google Street View Image.
 function populateInfoWindow(dealerInfo) {
     return ("<div class = 'info-content'>" +
         "<h3>" + dealerInfo.name + "</h3>" +
