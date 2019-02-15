@@ -5,28 +5,39 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Auto Dealer Finder</title>
     <link rel="stylesheet" type="text/css" href="css/styles.css">
+    
+    <!-- Use the W3Schools's style sheet for making the sliding side-bar. -->
+    <link rel="stylesheet" type="text/css" href="https://www.w3schools.com/w3css/4/w3.css">
 </head>
 <body>
     <div id="container">
-        <nav id="side-bar">
-            <h2>Auto Dealers in MinatoMirai</h2>
-            <div>
-                <input placeholder="Filter brand" data-bind="textInput: searchBrand, valueUpdate: 'afterkeydown'" />
-                <ul data-bind="foreach: filteredDealers">
-                    <li data-bind="text: brand, click: selectDealer"></li>
-                </ul>
+        <div id="side-bar" class="w3-sidebar w3-bar-block w3-card w3-animate-left" style="display: none;">
+            <button class="w3-bar-item w3-button w3-large" onclick="closeNav()">Close &times;</button>
+            <div class="leading-white">
+                <div id="side-bar-component">
+                    <h3>Available Car Brands</h3>
+                    <input placeholder="Filter brand" style="width: 95%;" data-bind="textInput: searchBrand, valueUpdate: 'afterkeydown'" />
+                    <ul data-bind="foreach: filteredDealers">
+                        <li class="w3-bar-item w3-button" data-bind="text: brand, click: selectDealer"></li>
+                    </ul>
+                </div>
+                <div id="side-bar-component">
+                    <h4 data-bind="if: wikiLinks().length !== 0">Wikipedia Article Links about "<span data-bind="text: wikiTitle"></span>"</h4>
+                    <ul data-bind="foreach: wikiLinks">
+                        <li class="w3-bar-item w3-button" data-bind="html: $data"></li>
+                        <!-- $data in KO.js means the content of the ViewModel itself (here just represents each wikiLink itself) -->
+                    </ul>
+                </div>
             </div>
-            <div>
-                <h3>Wikipedia Article Links</h3>
-                <ul data-bind="foreach: wikiLinks">
-                    <li data-bind="html: $data"></li>
-                    <!-- $data in KO.js means the content of the ViewModel itself (here just represents each wikiLink itself) -->
-                </ul>
-            </div>
-        </nav>
+        </div>
         
         <div id="main">
-            <div id="border"><span>Toggler Burger Icon</span></div>
+            <div class="w3-teal">
+                <button id="openNav" class="w3-button w3-teal w3-xxlarge" onclick="openNav()">&#9776;</button>
+                <div class="banner">
+                    <h1>Auto Dealers in MinatoMirai</h1>
+                </div>
+            </div>
             
             <div id="map-wrapper">
                 <div id="map"></div>

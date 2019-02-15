@@ -1,3 +1,4 @@
+/* Top Container */
 html, body, #container {
     font-family: Arial, sans-serif;
     width: 100%;
@@ -11,29 +12,36 @@ html, body, #container {
 }
 
 
-
-#side-bar {
-    width: 450px;
-    height: 100%;
+/* #1 Navigation Panel */
+.leading-white {
+    padding-left: 15px;
 }
 
-li {
-    list-style-type: none;
+#side-bar-component {
+    margin: 3px 0 30px;
+}
+
+ul {
+    list-style: none;
+    padding-left: 0;
 }
 
 
-
+/* #2 Main Content */
 #main {
     flex-grow: 1;
     height: 100%;
     display: flex;
+    /* vertical flex-grow */
     flex-flow: column;
 }
 
-#border {
-    height: 50px;
+/* #2.1 Banner */
+.banner {
+    padding-left: 20px;
 }
 
+/* #2.2 Google Map */
 #map-wrapper {
     flex-grow: 1;
 }
@@ -43,6 +51,6 @@ li {
 }
 
 #pano {
-    width: 200px;
-    height: 200px;
+    width: 450px;
+    height: 150px;
 }

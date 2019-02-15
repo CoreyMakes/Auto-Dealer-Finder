@@ -249,8 +249,8 @@ var dealerModel = function(data) {
     this.phone = "";
     this.hours = "";
 
-    var CLIENT_ID = "OZPSHTUEOD0EZQDXWOCSFZM2MQ1Y32OHEBHKK4CYYZDKQU4G";
-    var CLIENT_SECRET = "3O4GOCSEK15DWKUBZO42IZYOGDX5GKZQEIZOGO5SPP55DK45";
+    var CLIENT_ID = "1VV1VG5ZBXH4ENNDQ0D51TLIH5KUHCP0HPSW3NGVUDWC0IX2";
+    var CLIENT_SECRET = "2PP014B1VD4RFK2GASEVTWHHSIQURV51DJDUHWIPYADBXCJW";
 
     var getVenueIDUrl = "https://api.foursquare.com/v2/venues/search?ll=" + self.location.lat + "," + self.location.lng +
         "&client_id=" + CLIENT_ID + "&client_secret=" + CLIENT_SECRET + "&v=20190212" + "&query=" + self.name;
@@ -300,13 +300,15 @@ var dealerModel = function(data) {
     // This loadWikiData function is not a ko.computed function,
     // therefore, in order to run it, we need to call it (when user makes click action at a brand or marker).
     this.loadWikiData = function(carBrand) {
+        // Fill the Wiki articles theme (title).
+        myVM.wikiTitle(carBrand);
         // Clear out old data before new request.
         myVM.wikiLinks([]);
 
         var wikiUrl = "http://en.wikipedia.org/w/api.php?action=opensearch&search=" + carBrand + "&limit=10&format=json&callback=wikiCallback";
 
         var wikiRequestTimeout = setTimeout(function() {
-            myVM.wikiLinks.push("<h4>Failed to get Wikipedia resources...</h4>");
+            myVM.wikiLinks.push("<h5>Failed to get Wikipedia resources...</h5>");
         }, 8000);
 
         $.ajax(wikiUrl, {
@@ -406,8 +408,8 @@ function setInfoWindow(marker, infoWindow, dealerInfo) {
 // Function for generating contents of infowindow except from the Google Street View Image.
 function populateInfoWindow(dealerInfo) {
     return ("<div class = 'info-content'>" +
-        "<h3>" + dealerInfo.name + "</h3>" +
-        "<h4>" + dealerInfo.address + "</h4>" +
+        "<h5>" + dealerInfo.name + "</h5>" +
+        "<h6>" + dealerInfo.address + "</h6>" +
         "<p>" + dealerInfo.site + "<p>" +
         "<p>" + dealerInfo.venueID + "<p>" +
         "<p>" + dealerInfo.phone + "<p>" +
@@ -450,6 +452,24 @@ var ViewModel = function() {
         }
     }, this);
 
+    // The central theme of the listing Wiki articles varies with the car brand user selected.
+    this.wikiTitle = ko.observable("");
     // For accessing Wikipedia articles, save all the relevant links into a ko observableArray.
     this.wikiLinks = ko.observableArray([]);
 };
+
+
+
+// Functions for toggling the slidable navigation panel (for page styling).
+function openNav() {
+    document.getElementById("main").style.marginLeft = "25%";
+    document.getElementById("side-bar").style.width = "25%";
+    document.getElementById("side-bar").style.display = "block";
+    document.getElementById("openNav").style.display = "none";
+}
+
+function closeNav() {
+    document.getElementById("main").style.marginLeft = "0%";
+    document.getElementById("side-bar").style.display = "none";
+    document.getElementById("openNav").style.display = "inline-block";
+}
