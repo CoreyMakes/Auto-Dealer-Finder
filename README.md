@@ -1,12 +1,32 @@
 # Auto Dealer Finder
 
+
+Click [here](https://yuezhoulu.github.io/Neighborhood-Map/) to view the live project hosted by GitHub Pages.
+
 ![Screenshot](/screenshot.png)
 
 
 ## Project Overview
-   The Neighborhood Map project involves developing a single page application with the KnockoutJS framework and various API's. Aside from the Google Maps API, additional information is added to the project locations with the FourSquare API and Wikipedia API loaded asynchronously. KnockoutJS allows the project to be organized with the MVVM pattern.
-   
-   This application helps the user locate all available car dealers in the MinatoMirai 21 area in Yokohama, the second largest harbour city in Japan.
+The Neighborhood Map project involves developing a single page application with the KnockoutJS framework and various API's. Aside from the Google Maps API, additional information is added to the project locations with the FourSquare API and Wikipedia API loaded asynchronously. KnockoutJS allows the project to be organized with the MVVM pattern.
+
+This application helps the user locate all available car dealers in the MinatoMirai 21 area in Yokohama, the second largest harbour city in Japan.
+
+
+## Why this Project?
+The neighborhood map application is complex enough and incorporates a variety of data points that it can easily become unwieldy to manage. There are a number of frameworks, libraries and APIs available to make this process more manageable and many employers are looking for specific skills in using these packages. Interacting with API servers is the primary function of Front-End Web Developers. Use of third-party libraries and APIs is a standard and acceptable practice that is encouraged. Asynchronous programming is important to understand in today's market.
+
+
+## Skills Honed
+* Developing a FEND web application utilizing:
+    1. JavaScript
+    2. jQuery
+    3. Knockout.js Framework
+    4. HTML
+    5. CSS
+    6. Third-party APIs
++ Learnt how design patterns assist in developing a manageable codebase, and implemented separation of concerns concept by using MVVM design pattern.
++ Explored how frameworks can decrease the time required developing an application and provide a number of utilities for us to use.
++ Implementing third-party APIs that provide valuable data sets that can improve the quality of our application including Google Street View, Foursqaure, and Wikipedia.
 
 
 ## Getting Started
@@ -17,23 +37,14 @@
 5. Refer to the Wikipedia article links below the brand listing for additional infomation about the car maker/brand you have just selected.
 
 
-## Skills Honed
-+ Developing a FEND web application utilizing:
-    1. JavaScript
-    2. jQuery
-    3. Knockout.js Framework
-    4. HTML
-    5. CSS
-    6. Third-party APIs
-+ Implementing separation of concerns concept by using MVVM design pattern.
-+ Implementing third-party asynchronous API calls including Google Street View, Foursqaure, and Wikipedia.
-
-
 ## Files in this Repo
-  This project has a main html file called _**index.html**_ which is the View part of the application. The _**styles.css**_ in the css folder is responsible for the styling of the App. Finally, in the js folder you can find the Data, Data Model, and View Model of this App, the _**app.js**_ file. In the lib sub folder within the js folder, there are library installation files for jQuery and Knockout.js.
+This project has a main html file called _**index.html**_ which is the View part of the application. The _**styles.css**_ in the css folder is responsible for the styling of the App. Finally, in the js folder you can find the Data, Data Model, and View Model of this App, the _**app.js**_ file. In the lib sub folder within the js folder, there are library installation files for jQuery and Knockout.js.
 
 
 ## New Updates & Features
+- _**updated on Feb 25, 2019:**_
+    >- Updated this README.md file.
+
 - _**updated on Feb 18, 2019:**_
     >- Got rid of the w3school's external linked css styles.
     >- Refined the styling of the App.
