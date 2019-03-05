@@ -1,13 +1,13 @@
 # Auto Dealer Finder
 
 
-Click [here](https://yuezhoulu.github.io/Neighborhood-Map/) to view the live project hosted by GitHub Pages.
+Click [here](https://yuezhoulu.github.io/Auto-Dealer-Finder/) to view the live project hosted by GitHub Pages.
 
 ![Screenshot](/screenshot.png)
 
 
 ## Project Overview
-The Neighborhood Map project involves developing a single page application with the KnockoutJS framework and various API's. Aside from the Google Maps API, additional information is added to the project locations with the FourSquare API and Wikipedia API loaded asynchronously. KnockoutJS allows the project to be organized with the MVVM pattern.
+The Neighborhood Map project involves developing a single page application with the KnockoutJS framework and various APIs. Aside from the Google Maps API, additional information is added to the project locations with the FourSquare API and Wikipedia API loaded asynchronously. KnockoutJS allows the project to be organized with the MVVM pattern.
 
 This application helps the user locate all available car dealers in the MinatoMirai 21 area in Yokohama, the second largest harbour city in Japan.
 
@@ -42,6 +42,9 @@ This project has a main html file called _**index.html**_ which is the View part
 
 
 ## New Updates & Features
+- _**updated on Mar 5, 2019:**_
+    >- Some typo updates.
+
 - _**updated on Feb 25, 2019:**_
     >- Updated this README.md file.
 
